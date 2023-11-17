@@ -1,12 +1,11 @@
-// App.js
-import React from 'react';
+import React, { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import TaskList from './TaskList';
 import './App.css';
 
 const App = () => {
-  const tasks = [
+  const initialTasks = [
     { id: 1, text: 'Task 1' },
     { id: 2, text: 'Task 2' },
     { id: 3, text: 'Task 3' },
@@ -18,23 +17,43 @@ const App = () => {
     { id: 9, text: 'Task 9' },
     { id: 10, text: 'Task 10' },
   ];
-  const taskLists = [
-    { title: 'Unplanned', tasks: tasks },
+
+  const [taskLists, setTaskLists] = useState([
+    { title: 'Unplanned', tasks: initialTasks },
     { title: 'Today', tasks: [] },
     { title: 'Tomorrow', tasks: [] },
     { title: 'This Week', tasks: [] },
     { title: 'Next Week', tasks: [] },
-  ];
+  ]);
+
+  const handleDrop = (task, targetListTitle) => {
+    const targetListIndex = taskLists.findIndex((list) => list.title === targetListTitle);
+  
+    if (taskLists[targetListIndex].tasks.some((t) => t.id === task.id)) {
+      return; 
+    }
+  
+    const updatedLists = taskLists.map((list, index) => {
+      if (index === targetListIndex) {
+        return { ...list, tasks: [...list.tasks, task].sort((a, b) => a.id - b.id) };
+      } else {
+        return { ...list, tasks: list.tasks.filter((t) => t.id !== task.id) };
+      }
+    });
+  
+    setTaskLists(updatedLists);
+  };
+  
   return (
     <div className='App'>
       <h2>Task 5: Drag & Drop Task List</h2>
-        <DndProvider backend={HTML5Backend}>
-      <div style={{ display: 'flex' }}>
-        {taskLists.map((list, index) => (
-          <TaskList key={index} {...list} />
-        ))}
-      </div>
-    </DndProvider>
+      <DndProvider backend={HTML5Backend}>
+        <div style={{ display: 'flex' }}>
+          {taskLists.map((list, index) => (
+            <TaskList key={index} title={list.title} tasks={list.tasks} onDrop={(task) => handleDrop(task, list.title)} />
+          ))}
+        </div>
+      </DndProvider>
     </div>
   );
 };
